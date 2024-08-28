@@ -1,0 +1,33 @@
+{
+  "name": "postgis",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --detectOpenHandles --coverage",
+    "lint": "eslint ."
+  },
+  "keywords": [
+    "postgis",
+    "postgresql",
+    "geospatial",
+    "nodejs",
+    "database",
+    "geojson",
+    "geobuf",
+    "mvt"
+  ],
+  "author": "Suyog Dinesh Jadhav",
+  "license": "ISC",
+  "description": "A Node.js class for interacting with PostGIS-enabled PostgreSQL databases.",
+  "devDependencies": {
+    "@eslint/js": "^9.9.1",
+    "eslint": "^8.57.0",
+    "globals": "^15.9.0",
+    "jest": "^29.7.0",
+    "prettier": "^2.8.4"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jsuyog2/postgis.git"
+  }
+}
