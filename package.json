@@ -1,5 +1,5 @@
 {
-  "name": "postgis",
+  "name": "@jsuyog2/postgis",
   "version": "1.0.3",
   "main": "index.js",
   "scripts": {
