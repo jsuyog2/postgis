@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="42" failures="0" errors="0" time="3.589">
-  <testsuite name="Postgis" errors="0" failures="0" skipped="0" timestamp="2024-08-30T12:48:23" time="2.643" tests="42">
-    <testcase classname="Postgis constructor should throw an error if client is not provided" name="Postgis constructor should throw an error if client is not provided" time="0.044">
+<testsuites name="jest tests" tests="42" failures="0" errors="0" time="0.81">
+  <testsuite name="Postgis" errors="0" failures="0" skipped="0" timestamp="2024-08-30T16:59:02" time="0.423" tests="42">
+    <testcase classname="Postgis constructor should throw an error if client is not provided" name="Postgis constructor should throw an error if client is not provided" time="0.029">
     </testcase>
     <testcase classname="Postgis constructor should not throw an error if a valid client is provided" name="Postgis constructor should not throw an error if a valid client is provided" time="0.002">
     </testcase>
     <testcase classname="Postgis list_tables should execute the correct query" name="Postgis list_tables should execute the correct query" time="0.004">
     </testcase>
-    <testcase classname="Postgis list_tables should execute the correct query without filter" name="Postgis list_tables should execute the correct query without filter" time="0.002">
+    <testcase classname="Postgis list_tables should execute the correct query without filter" name="Postgis list_tables should execute the correct query without filter" time="0.001">
     </testcase>
     <testcase classname="Postgis list_columns should execute the correct query" name="Postgis list_columns should execute the correct query" time="0.002">
     </testcase>
-    <testcase classname="Postgis query_table should execute the correct query with parameters" name="Postgis query_table should execute the correct query with parameters" time="0.002">
+    <testcase classname="Postgis query_table should execute the correct query with parameters" name="Postgis query_table should execute the correct query with parameters" time="0.003">
     </testcase>
     <testcase classname="Postgis query_table should execute the query without parameters" name="Postgis query_table should execute the query without parameters" time="0.002">
     </testcase>
-    <testcase classname="Postgis query_table should execute the query with limit null" name="Postgis query_table should execute the query with limit null" time="0.001">
+    <testcase classname="Postgis query_table should execute the query with limit null" name="Postgis query_table should execute the query with limit null" time="0.002">
     </testcase>
     <testcase classname="Postgis bbox should execute the correct query with default parameters" name="Postgis bbox should execute the correct query with default parameters" time="0.002">
     </testcase>
-    <testcase classname="Postgis bbox should execute the query without parameters" name="Postgis bbox should execute the query without parameters" time="0.005">
+    <testcase classname="Postgis bbox should execute the query without parameters" name="Postgis bbox should execute the query without parameters" time="0.002">
     </testcase>
-    <testcase classname="Postgis bbox should execute the query without filter" name="Postgis bbox should execute the query without filter" time="0.001">
+    <testcase classname="Postgis bbox should execute the query without filter" name="Postgis bbox should execute the query without filter" time="0.005">
     </testcase>
     <testcase classname="Postgis centroid should execute the correct query with default parameters" name="Postgis centroid should execute the correct query with default parameters" time="0.002">
     </testcase>
@@ -33,43 +33,43 @@
     </testcase>
     <testcase classname="Postgis intersect_feature should execute the query without parameters" name="Postgis intersect_feature should execute the query without parameters" time="0.001">
     </testcase>
-    <testcase classname="Postgis intersect_feature should execute the query with filter" name="Postgis intersect_feature should execute the query with filter" time="0.001">
+    <testcase classname="Postgis intersect_feature should execute the query with filter" name="Postgis intersect_feature should execute the query with filter" time="0.002">
     </testcase>
-    <testcase classname="Postgis intersect_point should execute the correct query with default parameters" name="Postgis intersect_point should execute the correct query with default parameters" time="0.002">
+    <testcase classname="Postgis intersect_point should execute the correct query with default parameters" name="Postgis intersect_point should execute the correct query with default parameters" time="0.001">
     </testcase>
     <testcase classname="Postgis intersect_point should execute the query without parameters" name="Postgis intersect_point should execute the query without parameters" time="0.001">
     </testcase>
-    <testcase classname="Postgis intersect_point should execute the query with filter" name="Postgis intersect_point should execute the query with filter" time="0.002">
+    <testcase classname="Postgis intersect_point should execute the query with filter" name="Postgis intersect_point should execute the query with filter" time="0.001">
     </testcase>
-    <testcase classname="Postgis intersect_point should execute the query without limit" name="Postgis intersect_point should execute the query without limit" time="0.001">
+    <testcase classname="Postgis intersect_point should execute the query without limit" name="Postgis intersect_point should execute the query without limit" time="0.002">
     </testcase>
     <testcase classname="Postgis geojson should return geojson object" name="Postgis geojson should return geojson object" time="0.002">
     </testcase>
-    <testcase classname="Postgis geojson should execute the correct query with default parameters" name="Postgis geojson should execute the correct query with default parameters" time="0.002">
+    <testcase classname="Postgis geojson should execute the correct query with default parameters" name="Postgis geojson should execute the correct query with default parameters" time="0.003">
     </testcase>
-    <testcase classname="Postgis geojson should execute the query without parameters" name="Postgis geojson should execute the query without parameters" time="0.001">
+    <testcase classname="Postgis geojson should execute the query without parameters" name="Postgis geojson should execute the query without parameters" time="0.002">
     </testcase>
     <testcase classname="Postgis geojson should execute the query with filter and bounds length 3" name="Postgis geojson should execute the query with filter and bounds length 3" time="0.001">
     </testcase>
     <testcase classname="Postgis geojson should execute the query with bounds length 4" name="Postgis geojson should execute the query with bounds length 4" time="0.002">
     </testcase>
-    <testcase classname="Postgis geobuf should return geobuf data" name="Postgis geobuf should return geobuf data" time="0.001">
+    <testcase classname="Postgis geobuf should return geobuf data" name="Postgis geobuf should return geobuf data" time="0.002">
     </testcase>
-    <testcase classname="Postgis geobuf should execute the correct query with default parameters" name="Postgis geobuf should execute the correct query with default parameters" time="0.007">
+    <testcase classname="Postgis geobuf should execute the correct query with default parameters" name="Postgis geobuf should execute the correct query with default parameters" time="0.002">
     </testcase>
-    <testcase classname="Postgis geobuf should execute the query without parameters" name="Postgis geobuf should execute the query without parameters" time="0.001">
+    <testcase classname="Postgis geobuf should execute the query without parameters" name="Postgis geobuf should execute the query without parameters" time="0.006">
     </testcase>
     <testcase classname="Postgis geobuf should execute the query with filter and bounds length 3" name="Postgis geobuf should execute the query with filter and bounds length 3" time="0.001">
     </testcase>
-    <testcase classname="Postgis geobuf should execute the query with bounds length 4" name="Postgis geobuf should execute the query with bounds length 4" time="0.001">
+    <testcase classname="Postgis geobuf should execute the query with bounds length 4" name="Postgis geobuf should execute the query with bounds length 4" time="0.002">
     </testcase>
-    <testcase classname="Postgis mvt should execute the correct query with default parameters" name="Postgis mvt should execute the correct query with default parameters" time="0.002">
+    <testcase classname="Postgis mvt should execute the correct query with default parameters" name="Postgis mvt should execute the correct query with default parameters" time="0.001">
     </testcase>
-    <testcase classname="Postgis mvt should execute the query without parameters" name="Postgis mvt should execute the query without parameters" time="0.001">
+    <testcase classname="Postgis mvt should execute the query without parameters" name="Postgis mvt should execute the query without parameters" time="0.002">
     </testcase>
     <testcase classname="Postgis mvt should execute the query with filter" name="Postgis mvt should execute the query with filter" time="0.001">
     </testcase>
-    <testcase classname="Postgis nearest should execute the correct query with default parameters" name="Postgis nearest should execute the correct query with default parameters" time="0.002">
+    <testcase classname="Postgis nearest should execute the correct query with default parameters" name="Postgis nearest should execute the correct query with default parameters" time="0.001">
     </testcase>
     <testcase classname="Postgis nearest should execute the query without parameters" name="Postgis nearest should execute the query without parameters" time="0.001">
     </testcase>
@@ -79,11 +79,11 @@
     </testcase>
     <testcase classname="Postgis transform_point should execute the query without parameters" name="Postgis transform_point should execute the query without parameters" time="0.001">
     </testcase>
-    <testcase classname="Postgis transform_point should throw an error for invalid point format" name="Postgis transform_point should throw an error for invalid point format" time="0.009">
+    <testcase classname="Postgis transform_point should throw an error for invalid point format" name="Postgis transform_point should throw an error for invalid point format" time="0.003">
     </testcase>
-    <testcase classname="Postgis transform_point should throw an error when query execution fails" name="Postgis transform_point should throw an error when query execution fails" time="0.003">
+    <testcase classname="Postgis transform_point should throw an error when query execution fails" name="Postgis transform_point should throw an error when query execution fails" time="0.002">
     </testcase>
-    <testcase classname="Postgis _executeQuery should throw an error when query execution fails" name="Postgis _executeQuery should throw an error when query execution fails" time="0.003">
+    <testcase classname="Postgis _executeQuery should throw an error when query execution fails" name="Postgis _executeQuery should throw an error when query execution fails" time="0.001">
     </testcase>
   </testsuite>
 </testsuites>
