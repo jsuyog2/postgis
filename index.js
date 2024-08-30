@@ -36,7 +36,7 @@ module.exports = class Postgis {
         const query = intersect_feature(table_from, table_to, columns, distance, geom_column_from, geom_column_to, filter, sort, limit);
         return this._executeQuery(query);
     }
-    async intersect_point(table, point, { columns = '*', distance = '0', geom_column = 'geom', filter, sort, limit } = {}) {
+    async intersect_point(table, point, { columns = '*', distance = '0', geom_column = 'geom', filter, sort, limit = 10 } = {}) {
         const query = intersect_point(table, point, columns, distance, geom_column, filter, sort, limit);
         return this._executeQuery(query);
     }
