@@ -20,6 +20,7 @@ This Node.js class provides methods for interacting with a PostgreSQL/PostGIS da
   - [nearest](#nearest)
   - [transform_point](#transform_point)
 - [Error Handling](#error-handling)
+- [License](#license)
 
 ## Installation
 
@@ -29,13 +30,19 @@ This Node.js class provides methods for interacting with a PostgreSQL/PostGIS da
    npm install pg
    ```
 
+2. Install the `postgis` package:
+
+   ```bash
+   npm install postgis
+   ```
+
 ## Usage
 
 To use the `Postgis` class, first initialize it with a PostgreSQL client instance from the `pg` package:
 
 ```javascript
 const { Client } = require('pg');
-const Postgis = require('Postgis');
+const Postgis = require('postgis');
 
 const client = new Client({
     connectionString: 'your_connection_string'
@@ -282,9 +289,7 @@ Converts features from a table to Geobuf format.
 - `table`: The name of the table.
 - `options` (optional): JSON object with the following properties:
   - `bounds` (optional): Bounding box for the results.
-  - `geom_column` (optional): The geometry column, defaults to `'
-
-geom'`.
+  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
   - `columns` (optional): Columns to retrieve.
   - `filter` (optional): A SQL WHERE clause filter.
 
@@ -386,6 +391,22 @@ try {
     console.error('Error:', err);
 }
 ```
+
+## Version Compatibility
+
+- **PostgreSQL:** Compatible with PostgreSQL 12 and higher.
+- **PostGIS:** Compatible with PostGIS 3.0 and higher.
+- **Node.js:** Compatible with Node.js 14.x and higher.
+- **pg (node-postgres):** Version 8.x and higher.
+
+## Testing
+
+If you create a pull request, tests better pass :)
+
+  ```bash
+  npm install
+  npm test
+  ```
 
 ## License
 
