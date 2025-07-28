@@ -73,7 +73,7 @@ module.exports = class Postgis {
     async _executeQuery(query) {
         try {
             const res = await this.client.query(query);
-            return res.rows;
+           return res?.rows || res[0] || res;
         } catch (err) {
             throw new Error(`Query execution failed: ${err.message}`);
         }
