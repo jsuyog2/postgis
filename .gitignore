@@ -1,4 +1,42 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
 coverage
+*.lcov
+junit.xml
+
+# Build output
+dist
+*.tsbuildinfo
+
+# Dependencies
 node_modules
-.npmrc
+
+# Environment
 .env
+.env.*
+!.env.example
+.npmrc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Temporary
+tmp
+temp

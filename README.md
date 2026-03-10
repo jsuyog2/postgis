@@ -1,413 +1,350 @@
-# PostGIS for Node.js
+# postgis
 
-This Node.js class provides methods for interacting with a PostgreSQL/PostGIS database. It abstracts common spatial operations and queries, allowing you to easily perform spatial operations on your PostGIS-enabled PostgreSQL database.
+[![npm version](https://img.shields.io/npm/v/postgis.svg?style=flat-square)](https://www.npmjs.com/package/postgis)
+[![npm downloads](https://img.shields.io/npm/dm/postgis.svg?style=flat-square)](https://www.npmjs.com/package/postgis)
+[![Build Status](https://github.com/jsuyog2/postgis/actions/workflows/ci.yml/badge.svg)](https://github.com/jsuyog2/postgis/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/jsuyog2/postgis/branch/main/graph/badge.svg)](https://codecov.io/gh/jsuyog2/postgis)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 
-## Table of Contents
+> A **lightweight, type-safe** Node.js library for interacting with PostGIS-enabled PostgreSQL databases. Export GeoJSON, serve MVT vector tiles, run spatial queries, and more — with zero runtime dependencies.
 
-- [Installation](#installation)
-- [Usage](#usage)
-- [API Reference](#api-reference)
-  - [list_tables](#list_tables)
-  - [list_columns](#list_columns)
-  - [query_table](#query_table)
-  - [bbox](#bbox)
-  - [centroid](#centroid)
-  - [intersect_feature](#intersect_feature)
-  - [intersect_point](#intersect_point)
-  - [geojson](#geojson)
-  - [geobuf](#geobuf)
-  - [mvt](#mvt)
-  - [nearest](#nearest)
-  - [transform_point](#transform_point)
-- [Error Handling](#error-handling)
-- [License](#license)
+📖 **[Full Documentation →](https://jsuyog2.github.io/postgis)**
+
+---
+
+## Features
+
+| Feature | Details |
+|---|---|
+| 🔷 **TypeScript First** | Full type definitions, IntelliSense, and compile-time safety |
+| 📦 **Dual ESM + CJS** | Tree-shakable ESM + CommonJS fallback — works everywhere |
+| ⚡ **Zero Runtime Deps** | Bring your own `pg` client, nothing else required |
+| 🗺️ **Spatial Queries** | bbox, centroid, intersections, nearest, coordinate transforms |
+| 📄 **GeoJSON Export** | Full `FeatureCollection` with bounds, ID, and precision control |
+| 🗜️ **Geobuf Export** | Binary-compact protobuf encoding via `ST_AsGeobuf` |
+| 🧱 **MVT Tiles** | Server-side Mapbox Vector Tiles via `ST_AsMVT` |
+| 🧪 **Fully Tested** | 50+ unit tests with mocked `pg.Client` — no database needed |
+
+---
 
 ## Installation
 
-1. Install the required packages using npm:
+```bash
+npm install postgis pg
+```
 
-   ```bash
-   npm install pg
-   ```
+```bash
+yarn add postgis pg
+```
 
-2. Install the `postgis` package:
+```bash
+pnpm add postgis pg
+```
 
-   ```bash
-   npm install postgis
-   ```
+**Requirements:** Node.js ≥ 18, PostgreSQL ≥ 12, PostGIS ≥ 3.0
 
-## Usage
+---
 
-To use the `Postgis` class, first initialize it with a PostgreSQL client instance from the `pg` package:
+## Quick Start
 
-```javascript
-const { Client } = require('pg');
-const Postgis = require('postgis');
+```typescript
+import { Client } from 'pg';
+import Postgis from 'postgis';
 
-const client = new Client({
-    connectionString: 'your_connection_string'
-});
-
-client.connect();
+const client = new Client({ connectionString: process.env.DATABASE_URL });
+await client.connect();
 
 const postgis = new Postgis(client);
 
-// Example usage
-async function run() {
-    try {
-        const tables = await postgis.list_tables({ filter: 'table_type = \'BASE TABLE\'' });
-        console.log('Tables:', tables);
+// List spatial tables
+const tables = await postgis.list_tables();
 
-        const columns = await postgis.list_columns('your_table');
-        console.log('Columns:', columns);
+// Export as GeoJSON
+const fc = await postgis.geojson('parcels', { precision: 6, columns: 'name, area' });
+console.log(fc.type); // "FeatureCollection"
 
-        const features = await postgis.query_table('your_table', {
-            columns: 'name, geom',
-            filter: `"column_name" = 'value'`,
-            sort: 'name ASC',
-            limit: 50
-        });
-        console.log('Features:', features);
-    } catch (err) {
-        console.error('Error:', err);
-    } finally {
-        await client.end();
-    }
-}
+// Find 5 nearest hospitals
+const nearby = await postgis.nearest('hospitals', '73.5,14.9,4326', { limit: 5 });
 
-run();
+await client.end();
 ```
 
-## API Reference
-
-### `list_tables(options)`
-
-Lists all tables in the database. Optionally, you can filter by schema or other parameters.
-
-**Parameters:**
-- `options` (optional): JSON object with the following properties:
-  - `filter` (optional): A SQL WHERE clause filter.
-
-**Returns:**
-A list of tables with their metadata.
-
-**Example:**
+**CommonJS:**
 
 ```javascript
-const tables = await postgis.list_tables({ filter: 'table_type = \'BASE TABLE\'' });
+const Postgis = require('postgis');
+const postgis = new Postgis(client);
 ```
+
+---
+
+## API Documentation
+
+### Constructor
+
+```typescript
+new Postgis(client: PostgisClient)
+```
+
+Accepts any `pg.Client`, `pg.Pool` client, or any object with a `query(sql)` method.
+
+---
+
+### `list_tables(options?)`
+
+Lists all user-accessible tables with PostGIS geometry metadata.
+
+```typescript
+const tables = await postgis.list_tables({ filter: "table_type = 'BASE TABLE'" });
+```
+
+---
 
 ### `list_columns(table)`
 
-Lists all columns in a given table.
+Lists all columns of a table using PostgreSQL system catalogs.
 
-**Parameters:**
-- `table`: The name of the table.
-
-**Returns:**
-A list of columns in the table.
-
-**Example:**
-
-```javascript
-const columns = await postgis.list_columns('your_table');
+```typescript
+const cols = await postgis.list_columns('parcels');
+// [{ field_name: 'geom', field_type: 'geometry' }, ...]
 ```
 
-### `query_table(table, options)`
+---
 
-Queries a table with optional parameters for columns, filtering, grouping, sorting, and limiting the results.
+### `query_table(table, options?)`
 
-**Parameters:**
-- `table`: The name of the table.
-- `options` (optional): JSON object with the following properties:
-  - `columns` (optional): Columns to retrieve, defaults to `'*'`.
-  - `filter` (optional): A SQL WHERE clause filter.
-  - `group` (optional): Columns to group by.
-  - `sort` (optional): Sorting order.
-  - `limit` (optional): Limit the number of results, defaults to `100`.
+Flexible SELECT with filter, group, sort, and limit.
 
-**Returns:**
-A list of rows from the query.
-
-**Example:**
-
-```javascript
-const features = await postgis.query_table('your_table', {
-    columns: 'name, geom',
-    filter: `"column_name" = 'value'`,
-    sort: 'name ASC',
-    limit: 50
+```typescript
+const rows = await postgis.query_table('parcels', {
+  columns: 'id, name',
+  filter: "status = 'active'",
+  sort: 'name ASC',
+  limit: 50,
 });
 ```
 
-### `bbox(table, options)`
+---
 
-Calculates the bounding box (extent) for a given table based on a specified geometry column.
+### `bbox(table, options?)`
 
-**Parameters:**
-- `table`: The name of the table.
-- `options` (optional): JSON object with the following properties:
-  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
-  - `srid` (optional): The SRID for the bounding box, defaults to `4326`.
-  - `filter` (optional): A SQL WHERE clause filter.
+Returns the spatial bounding box (`ST_Extent`) of all geometries.
 
-**Returns:**
-An object representing the bounding box with coordinates.
+```typescript
+const [{ bbox }] = await postgis.bbox('parcels', { srid: 4326 });
+```
 
-**Example:**
+---
 
-```javascript
-const bbox = await postgis.bbox('your_table', {
-    geom_column: 'geom',
-    srid: 4326,
-    filter: `"some_column" = 'some_value'`
+### `centroid(table, options?)`
+
+Returns the centroid `(x, y)` of each geometry.
+
+```typescript
+const pts = await postgis.centroid('parcels', { force_on_surface: true });
+```
+
+---
+
+### `intersect_feature(table_from, table_to, options?)`
+
+Cross-table spatial intersection using `ST_DWithin`.
+
+```typescript
+const hits = await postgis.intersect_feature('roads', 'parcels', { distance: '50' });
+```
+
+---
+
+### `intersect_point(table, point, options?)`
+
+Features within `distance` of a point.
+
+```typescript
+// point format: "longitude,latitude,SRID"
+const nearby = await postgis.intersect_point('shops', '73.5,14.9,4326', {
+  distance: '500',
+  limit: 20,
 });
 ```
 
-### `centroid(table, options)`
+---
 
-Calculates the centroid of geometries in a given table.
+### `geojson(table, options?)`
 
-**Parameters:**
-- `table`: The name of the table.
-- `options` (optional): JSON object with the following properties:
-  - `force_on_surface` (optional): Whether to force the centroid to be on the surface, defaults to `false`.
-  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
-  - `srid` (optional): The SRID, defaults to `'4326'`.
-  - `filter` (optional): A SQL WHERE clause filter.
+Exports a GeoJSON `FeatureCollection`.
 
-**Returns:**
-A list of centroids.
+```typescript
+const fc = await postgis.geojson('parcels', {
+  bounds: '72.8,18.9,73.2,19.2',  // xmin,ymin,xmax,ymax
+  precision: 6,
+  columns: 'name, area',
+});
+// { type: 'FeatureCollection', features: [...] }
+```
 
-**Example:**
+---
 
-```javascript
-const centroids = await postgis.centroid('your_table', {
-    force_on_surface: true,
-    geom_column: 'geom',
-    srid: 4326,
-    filter: `"column_name" = 'value'`
+### `geobuf(table, options?)`
+
+Exports features as a Geobuf binary `Buffer`.
+
+```typescript
+const buf = await postgis.geobuf('parcels');
+res.setHeader('Content-Type', 'application/x-protobuf');
+res.send(buf);
+```
+
+---
+
+### `mvt(table, x, y, z, options?)`
+
+Generates a Mapbox Vector Tile for tile coordinate `z/x/y`.
+
+```typescript
+const [{ mvt }] = await postgis.mvt('parcels', 0, 0, 0);
+res.setHeader('Content-Type', 'application/vnd.mapbox-vector-tile');
+res.send(mvt);
+```
+
+---
+
+### `nearest(table, point, options?)`
+
+KNN nearest-neighbor search ordered by `<->` distance operator.
+
+```typescript
+const closest = await postgis.nearest('hospitals', '73.5,14.9,4326', { limit: 5 });
+// Each row includes a `distance` column
+```
+
+---
+
+### `transform_point(point, options?)`
+
+Transforms a point between coordinate systems.
+
+```typescript
+const [{ x, y }] = await postgis.transform_point('73.5,14.9,4326', { srid: 3857 });
+```
+
+---
+
+## Configuration
+
+### Environment Variables
+
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `POSTGIS_DEBUG` | Set to `'true'` to log all SQL queries to stderr |
+
+### Point Format
+
+Methods accepting a `point` argument use `"x,y,srid"` format:
+
+```
+73.70534,14.94202,4326  →  longitude,latitude,EPSG:4326
+```
+
+---
+
+## Advanced Usage
+
+### MVT Tile Server (Express)
+
+```typescript
+app.get('/tiles/:z/:x/:y.mvt', async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const postgis = new Postgis(client);
+    const [row] = await postgis.mvt('parcels', +req.params.x, +req.params.y, +req.params.z);
+    if (!row?.mvt) return res.status(204).end();
+    res
+      .setHeader('Content-Type', 'application/vnd.mapbox-vector-tile')
+      .setHeader('Cache-Control', 'public, max-age=3600')
+      .send(row.mvt);
+  } finally {
+    client.release();
+  }
 });
 ```
 
-### `intersect_feature(table_from, table_to, options)`
+### Using with pg.Pool
 
-Finds intersections between features in two tables.
-
-**Parameters:**
-- `table_from`: The first table.
-- `table_to`: The second table.
-- `options` (optional): JSON object with the following properties:
-  - `columns` (optional): Columns to retrieve, defaults to `'*'`.
-  - `distance` (optional): Distance for the intersection, defaults to `'0'`.
-  - `geom_column_from` (optional): The geometry column for the first table, defaults to `'geom'`.
-  - `geom_column_to` (optional): The geometry column for the second table, defaults to `'geom'`.
-  - `filter` (optional): A SQL WHERE clause filter.
-  - `sort` (optional): Sorting order.
-  - `limit` (optional): Limit the number of results.
-
-**Returns:**
-A list of intersecting features.
-
-**Example:**
-
-```javascript
-const intersections = await postgis.intersect_feature('table1', 'table2', {
-    columns: 'name, geom',
-    distance: '10',
-    filter: `"some_column" = 'some_value'`,
-    sort: 'name ASC',
-    limit: 50
-});
-```
-
-### `intersect_point(table, point, options)`
-
-Finds features in a table that intersect with a given point.
-
-**Parameters:**
-- `table`: The name of the table.
-- `point`: The point to intersect with.
-- `options` (optional): JSON object with the following properties:
-  - `columns` (optional): Columns to retrieve, defaults to `'*'`.
-  - `distance` (optional): Distance for the intersection, defaults to `'0'`.
-  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
-  - `filter` (optional): A SQL WHERE clause filter.
-  - `sort` (optional): Sorting order.
-  - `limit` (optional): Limit the number of results.
-
-**Returns:**
-A list of features intersecting with the point.
-
-**Example:**
-
-```javascript
-const features = await postgis.intersect_point('your_table', '1,1,4326', {
-    columns: 'name, geom',
-    distance: '5',
-    filter: `"some_column" = 'some_value'`,
-    sort: 'name ASC',
-    limit: 10
-});
-```
-
-### `geojson(table, options)`
-
-Converts features from a table to GeoJSON format.
-
-**Parameters:**
-- `table`: The name of the table.
-- `options` (optional): JSON object with the following properties:
-  - `bounds` (optional): Bounding box for the results.
-  - `id_column` (optional): Column to use as the feature ID.
-  - `precision` (optional): Precision for coordinates, defaults to `9`.
-  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
-  - `columns` (optional): Columns to retrieve.
-  - `filter` (optional): A SQL WHERE clause filter.
-
-**Returns:**
-A GeoJSON `FeatureCollection`.
-
-**Example:**
-
-```javascript
-const geojson = await postgis.geojson('your_table', {
-    bounds: 'xmin ymin, xmax ymax',
-    id_column: 'id',
-    precision: 6,
-    geom_column: 'geom',
-    columns: 'name, geom',
-    filter: `"some_column" = 'some_value'`
-});
-```
-
-### `geobuf(table, options)`
-
-Converts features from a table to Geobuf format.
-
-**Parameters:**
-- `table`: The name of the table.
-- `options` (optional): JSON object with the following properties:
-  - `bounds` (optional): Bounding box for the results.
-  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
-  - `columns` (optional): Columns to retrieve.
-  - `filter` (optional): A SQL WHERE clause filter.
-
-**Returns:**
-A Geobuf binary encoded string.
-
-**Example:**
-
-```javascript
-const geobuf = await postgis.geobuf('your_table', {
-    bounds: 'xmin ymin, xmax ymax',
-    geom_column: 'geom',
-    columns: 'name, geom',
-    filter: `"some_column" = 'some_value'`
-});
-```
-
-### `mvt(table, x, y, z, options)`
-
-Generates a Mapbox Vector Tile (MVT) for a given tile coordinate.
-
-**Parameters:**
-- `table`: The name of the table.
-- `x`: The x-coordinate of the tile.
-- `y`: The y-coordinate of the tile.
-- `z`: The zoom level.
-- `options` (optional): JSON object with the following properties:
-  - `columns` (optional): Columns to retrieve.
-  - `id_column` (optional): Column to use as the feature ID.
-  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
-  - `filter` (optional): A SQL WHERE clause filter.
-
-**Returns:**
-A Mapbox Vector Tile.
-
-**Example:**
-
-```javascript
-const mvt = await postgis.mvt('your_table', 1, 2, 3, {
-    columns: 'name, geom',
-    id_column: 'id',
-    filter: `"some_column" = 'some_value'`
-});
-```
-
-### `nearest(table, point, options)`
-
-Finds the nearest features to a given point.
-
-**Parameters:**
-- `table`: The name of the table.
-- `point`: The point to find the nearest features to.
-- `options` (optional): JSON object with the following properties:
-  - `columns` (optional): Columns to retrieve, defaults to `'*'`.
-  - `geom_column` (optional): The geometry column, defaults to `'geom'`.
-  - `filter` (optional): A SQL WHERE clause filter.
-  - `limit` (optional): Limit the number of results, defaults to `10`.
-
-**Returns:**
-A list of the nearest features.
-
-**Example:**
-
-```javascript
-const nearest = await postgis.nearest('your_table', '1,1,4326', {
-    columns: 'name, geom',
-    filter: `"some_column" = 'some_value'`,
-    limit: 5
-});
-```
-
-### `transform_point(point, options)`
-
-Transforms a point from one SRID to another.
-
-**Parameters:**
-- `point`: The point to transform.
-- `options` (optional): JSON object with the following properties:
-  - `srid` (optional): The target SRID, defaults to `4326`.
-
-**Returns:**
-The transformed point.
-
-**Example:**
-
-```javascript
-const transformed = await postgis.transform_point('1,1,4326', { srid: 3857 });
-```
-
-## Error Handling
-
-All methods throw an error if the query execution fails. Ensure proper error handling in your application to manage these errors.
-
-```javascript
+```typescript
+const client = await pool.connect();
+const postgis = new Postgis(client);
 try {
-    const result = await postgis.someMethod();
-    console.log(result);
-} catch (err) {
-    console.error('Error:', err);
+  return await postgis.geojson('my_layer');
+} finally {
+  client.release();
 }
 ```
 
-## Version Compatibility
+---
 
-- **PostgreSQL:** Compatible with PostgreSQL 12 and higher.
-- **PostGIS:** Compatible with PostGIS 3.0 and higher.
-- **Node.js:** Compatible with Node.js 14.x and higher.
-- **pg (node-postgres):** Version 8.x and higher.
+## Performance Notes
 
-## Testing
-
-If you create a pull request, tests better pass :)
-
-  ```bash
-  npm install
-  npm test
+- **Spatial indexes** are essential for large tables. Add a GiST index:
+  ```sql
+  CREATE INDEX ON my_layer USING GIST(geom);
   ```
+- **MVT queries** internally call `ST_TileEnvelope` — PostGIS 3.0+ required.
+- **Bounds filtering** avoids full-table scans when a `bounds` argument is provided.
+- **`nearest()`** uses the index-accelerated `<->` KNN operator — much faster than `ORDER BY ST_Distance`.
+
+---
+
+## Security
+
+> [!WARNING]
+> SQL values (table names, column names, filters) are interpolated directly into SQL strings — **not parameterized**. Never pass raw user input as `table`, `filter`, or `columns` arguments.
+
+See [SECURITY.md](SECURITY.md) for the full security policy and reporting process.
+
+---
+
+## Examples
+
+See the [`examples/`](examples/) directory:
+
+| File | Description |
+|---|---|
+| [`basic-usage.js`](examples/basic-usage.js) | List tables, columns, query, bbox |
+| [`geojson-export.js`](examples/geojson-export.js) | Export GeoJSON and Geobuf to files |
+| [`mvt-server.js`](examples/mvt-server.js) | Express MVT tile server with Mapbox GL JS viewer |
+
+---
+
+## FAQ
+
+**Does it work with pg.Pool?**
+Yes — acquire a client from the pool, pass it to `new Postgis(client)`, and release it after.
+
+**CommonJS or ESM?**
+Both. Import with `import Postgis from 'postgis'` (ESM) or `const Postgis = require('postgis')` (CJS).
+
+**Any runtime dependencies?**
+None. `pg` is a peer dependency — you install and manage it yourself.
+
+Full FAQ: [jsuyog2.github.io/postgis/guide/faq](https://jsuyog2.github.io/postgis/guide/faq)
+
+---
+
+## Contributing
+
+We welcome contributions! Please read [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
+
+- Setting up the dev environment
+- Running tests (`npm test`)
+- Submitting pull requests
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+[MIT](LICENSE) © [Suyog Dinesh Jadhav](https://github.com/jsuyog2)

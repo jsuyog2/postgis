@@ -1,0 +1,21 @@
+# Files/dirs excluded from npm publish
+src/
+__tests__/
+docs/
+examples/
+coverage/
+.github/
+.vscode/
+node_modules/
+
+# Config files
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+eslint.config.mjs
+.prettierrc
+.editorconfig
+.gitignore
+*.log
+junit.xml
+.env*

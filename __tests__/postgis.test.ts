@@ -1,19 +1,21 @@
-// __tests__/postgis.test.js
-const Postgis = require('../index'); // Adjust the path if necessary
+// __tests__/postgis.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import Postgis from '../src/index';
 
 describe('Postgis', () => {
-  let client;
-  let postgis;
+  let client: { query: ReturnType<typeof vi.fn> };
+  let postgis: Postgis;
 
   beforeEach(() => {
     client = {
-      query: jest.fn()
+      query: vi.fn()
     };
     postgis = new Postgis(client);
   });
 
   describe('constructor', () => {
     it('should throw an error if client is not provided', () => {
+      // @ts-expect-error intentional invalid arg
       expect(() => new Postgis()).toThrow('A valid pg.Client instance is required.');
     });
 
@@ -56,24 +58,15 @@ describe('Postgis', () => {
     `.replace(/\s+/g, ' ').trim();
       await postgis.list_tables();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
 
   describe('list_columns', () => {
     it('should execute the correct query', async () => {
-      // Mock the client.query method to resolve with an empty rows array
       client.query.mockResolvedValue({ rows: [] });
-
-      // Define the table name for the test
       const table = 'table_name';
-
-      // Call the function to execute
       await postgis.list_columns(table);
-
-      // Expect the client.query method to be called with the correct SQL query
       expect(client.query).toHaveBeenCalledWith(expect.stringMatching(
         new RegExp(
           `SELECT\\s+attname\\s+as\\s+field_name,\\s+typname\\s+as\\s+field_type\\s+FROM\\s+pg_namespace,\\s+pg_attribute,\\s+pg_type,\\s+pg_class\\s+WHERE\\s+pg_type\\.oid\\s+=\\s+atttypid\\s+AND\\s+pg_class\\.oid\\s+=\\s+attrelid\\s+AND\\s+relnamespace\\s+=\\s+pg_namespace\\.oid\\s+AND\\s+attnum\\s+>=\\s+1\\s+AND\\s+relname\\s+=\\s+'${table}'`
@@ -85,17 +78,10 @@ describe('Postgis', () => {
 
   describe('query_table', () => {
     it('should execute the correct query with parameters', async () => {
-      // Mock the client.query method to resolve with an empty rows array
       client.query.mockResolvedValue({ rows: [] });
-
-      // Define the table and options for the test
       const table = 'table_name';
       const options = { columns: 'name', filter: `"state" = 'GOA'`, group: 'name', sort: 'name', limit: 10 };
-
-      // Call the function to execute
       await postgis.query_table(table, options);
-
-      // Define the expected regular expression for the query
       const expectedQuery = new RegExp(
         `^SELECT\\s+${options.columns}\\s+FROM\\s+${table}\\s*` +
         `${options.filter ? `WHERE\\s+${options.filter}\\s*` : ''}` +
@@ -103,48 +89,29 @@ describe('Postgis', () => {
         `${options.sort ? `ORDER\\s+BY\\s+${options.sort}\\s*` : ''}` +
         `${options.limit ? `LIMIT\\s+${options.limit}\\s*` : ''}$`
       );
-
-      // Expect the client.query method to be called with the correct SQL query
       expect(client.query).toHaveBeenCalledWith(expect.stringMatching(expectedQuery));
     });
 
     it('should execute the query without parameters', async () => {
-      // Mock the client.query method to resolve with an empty rows array
       client.query.mockResolvedValue({ rows: [] });
-
-      // Define the table and options for the test
       const table = 'table_name';
-
-      // Call the function to execute
       await postgis.query_table(table);
-
-      // Define the expected regular expression for the query
       const expectedQuery = `
       SELECT * FROM ${table}
   `.replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query with limit null', async () => {
-      // Mock the client.query method to resolve with an empty rows array
       client.query.mockResolvedValue({ rows: [] });
-
-      // Define the table and options for the test
       const table = 'table_name';
       const options = { limit: null };
-      // Call the function to execute
       await postgis.query_table(table, options);
-
-      // Define the expected regular expression for the query
       const expectedQuery = `
       SELECT * FROM ${table}
   `.replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
@@ -152,7 +119,7 @@ describe('Postgis', () => {
 
 
   describe('bbox', () => {
-    const queryFun = (table, geom_column = 'geom', srid = '4326', filter) => {
+    const queryFun = (table: string, geom_column = 'geom', srid: string | number = '4326', filter?: string) => {
       return `
         SELECT
       ST_Extent(ST_Transform(${geom_column}, ${srid})) as bbox
@@ -167,14 +134,9 @@ describe('Postgis', () => {
       const geom_column = 'geom';
       const srid = '4326';
       const filter = '';
-      await postgis.bbox(table, { geom_column, srid, filter });
-
-      // Define the expected SQL query string
-      const expectedQuery = queryFun(table, geom_column, srid, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      await postgis.bbox(table, { geom_column, srid: Number(srid), filter });
+      const expectedQuery = queryFun(table, geom_column, srid, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -182,13 +144,8 @@ describe('Postgis', () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
       await postgis.bbox(table);
-
-      // Define the expected SQL query string
-      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
       expect(receivedQuery).toMatch(expectedQuery);
     });
     it('should execute the query without filter', async () => {
@@ -197,20 +154,15 @@ describe('Postgis', () => {
       const geom_column = 'geom';
       const srid = '4326';
       const filter = 'column_name = "value"';
-      await postgis.bbox(table, { geom_column, srid, filter });
-
-      // Define the expected SQL query string
-      const expectedQuery = queryFun(table, geom_column, srid, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      await postgis.bbox(table, { geom_column, srid: Number(srid), filter });
+      const expectedQuery = queryFun(table, geom_column, srid, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
 
   describe('centroid', () => {
-    const queryFun = (table, force_on_surface = false, geom_column = 'geom', srid = '4326', filter) => {
+    const queryFun = (table: string, force_on_surface = false, geom_column = 'geom', srid = '4326', filter?: string) => {
       return `
   SELECT
       ST_X(
@@ -239,33 +191,17 @@ describe('Postgis', () => {
       const geom_column = 'geom';
       const srid = '4326';
       const filter = '';
-
-      // Call the function with default parameters
       await postgis.centroid(table, { force_on_surface, geom_column, srid, filter });
-
-      // Define the expected SQL query
-      const expectedQuery = queryFun(table, force_on_surface, geom_column, srid, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, force_on_surface, geom_column, srid, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
     it('should execute the query without parameters', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
-
-      // Call the function with default parameters
       await postgis.centroid(table);
-
-      // Define the expected SQL query
-      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
     it('should execute the query with filter', async () => {
@@ -275,24 +211,16 @@ describe('Postgis', () => {
       const geom_column = 'geom';
       const srid = '4326';
       const filter = 'column_name = "value"';
-
-      // Call the function with default parameters
       await postgis.centroid(table, { force_on_surface, geom_column, srid, filter });
-
-      // Define the expected SQL query
-      const expectedQuery = queryFun(table, force_on_surface, geom_column, srid, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, force_on_surface, geom_column, srid, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
 
 
   describe('intersect_feature', () => {
-    const queryFun = (table_from, table_to, columns = '*', distance = '0', geom_column_from = 'geom', geom_column_to = 'geom', filter, sort, limit) => {
+    const queryFun = (table_from: string, table_to: string, columns = '*', distance = '0', geom_column_from = 'geom', geom_column_to = 'geom', filter?: string, sort?: string, limit?: number | null) => {
       return `
        SELECT
     ${columns}
@@ -325,33 +253,18 @@ describe('Postgis', () => {
       const filter = ''
       const sort = 'some_column ASC'
       const limit = 10
-      // Call the function with default parameters
       await postgis.intersect_feature(table_from, table_to, { columns, distance, geom_column_from, geom_column_to, filter, sort, limit });
-
-      // Define the expected SQL query
-      const expectedQuery = queryFun(table_from, table_to, columns, distance, geom_column_from, geom_column_to, filter, sort, limit).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table_from, table_to, columns, distance, geom_column_from, geom_column_to, filter, sort, limit).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
     it('should execute the query without parameters', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const table_from = 'table_name';
       const table_to = 'other_table';
-
-      // Call the function with default parameters
       await postgis.intersect_feature(table_from, table_to);
-
-      // Define the expected SQL query
-      const expectedQuery = queryFun(table_from, table_to).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table_from, table_to).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -366,16 +279,9 @@ describe('Postgis', () => {
       const filter = 'column_name = "value"'
       const sort = 'some_column ASC'
       const limit = 10
-      // Call the function with default parameters
       await postgis.intersect_feature(table_from, table_to, { columns, distance, geom_column_from, geom_column_to, filter, sort, limit });
-
-      // Define the expected SQL query
-      const expectedQuery = queryFun(table_from, table_to, columns, distance, geom_column_from, geom_column_to, filter, sort, limit).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table_from, table_to, columns, distance, geom_column_from, geom_column_to, filter, sort, limit).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
@@ -383,8 +289,8 @@ describe('Postgis', () => {
 
 
   describe('intersect_point', () => {
-    const queryFun = (table, point, columns = '*', distance = '0', geom_column = 'geom', filter, sort, limit) => {
-      const [x, y, srid] = point.match(/^(-?\d+\.?\d+),(-?\d+\.?\d+),([0-9]{4})$/).slice(1);
+    const queryFun = (table: string, point: string, columns = '*', distance = '0', geom_column = 'geom', filter?: string, sort?: string, limit?: number | null) => {
+      const [x, y, srid] = point.match(/^(-?\d+\.?\d+),(-?\d+\.?\d+),([0-9]{4})$/)!.slice(1);
 
       return `
        SELECT
@@ -415,103 +321,77 @@ describe('Postgis', () => {
     it('should execute the correct query with default parameters', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
-      const point = '73.70534,14.94202,4326'; // Ensure this is in the correct format
+      const point = '73.70534,14.94202,4326';
       const columns = '*'
       const distance = '0'
       const geom_column = 'geom'
       const filter = ''
       const sort = 'some_column ASC'
       const limit = 10
-      // Call the function with default parameters
       await postgis.intersect_point(table, point, { columns, distance, geom_column, filter, sort, limit });
-
-      // Define the expected SQL query with lowercase PostGIS functions
-      const expectedQuery = queryFun(table, point, columns, distance, geom_column, filter, sort, limit).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, point, columns, distance, geom_column, filter, sort, limit).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query without parameters', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
-      const point = '73.70534,14.94202,4326'; // Ensure this is in the correct format
-      // Call the function with default parameters
+      const point = '73.70534,14.94202,4326';
       await postgis.intersect_point(table, point);
-
-      // Define the expected SQL query with lowercase PostGIS functions
-      const expectedQuery = queryFun(table, point).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, point).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query with filter', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
-      const point = '73.70534,14.94202,4326'; // Ensure this is in the correct format
+      const point = '73.70534,14.94202,4326';
       const columns = '*'
       const distance = '0'
       const geom_column = 'geom'
       const filter = 'column_name ="value"'
       const sort = 'some_column ASC'
       const limit = 10
-
-      // Call the function with default parameters
       await postgis.intersect_point(table, point, { columns, distance, geom_column, filter, sort, limit });
-
-      // Define the expected SQL query with lowercase PostGIS functions
-      const expectedQuery = queryFun(table, point, columns, distance, geom_column, filter, sort, limit).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, point, columns, distance, geom_column, filter, sort, limit).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query without limit', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
-      const point = '73.70534,14.94202,4326'; // Ensure this is in the correct format
+      const point = '73.70534,14.94202,4326';
       const columns = '*'
       const distance = '0'
       const geom_column = 'geom'
       const filter = 'column_name ="value"'
       const sort = 'some_column ASC'
       const limit = null
-
-      // Call the function with default parameters
       await postgis.intersect_point(table, point, { columns, distance, geom_column, filter, sort, limit });
-
-      // Define the expected SQL query with lowercase PostGIS functions
-      const expectedQuery = queryFun(table, point, columns, distance, geom_column, filter, sort, limit).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, point, columns, distance, geom_column, filter, sort, limit).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
+    });
+
+    it('should throw an error for invalid point format', async () => {
+      await expect(postgis.intersect_point('table', 'invalid-point')).rejects.toThrow('Invalid point format');
     });
   });
 
 
 
   describe('geojson', () => {
-    const queryFun = (table, bounds, id_column, precision = 9, geom_column = 'geom', columns, filter) => {
-      let bounds_value = bounds ? bounds.split(',').map(Number) : null;
+    const queryFun = (table: string, bounds?: string, id_column?: string, precision = 9, geom_column = 'geom', columns?: string, filter?: string) => {
+      const bounds_value = bounds ? bounds.split(',').map(Number) : null;
       return `SELECT
         jsonb_build_object(
           'type',       'Feature',
           ${id_column ? `'id', ${id_column},` : ''
         }
-          'geometry',   ST_AsGeoJSON(geom, ${parseInt(precision, 10)})::jsonb,
+          'geometry',   ST_AsGeoJSON(geom, ${parseInt(String(precision), 10)})::jsonb,
           'properties', to_jsonb( subq.* ) - 'geom' ${id_column ? `- '${id_column}'` : ''}
         ) AS geojson
   
@@ -556,21 +436,15 @@ describe('Postgis', () => {
     it('should execute the correct query with default parameters', async () => {
       client.query.mockResolvedValue({ rows: [{ geojson: {} }] });
       const table = 'table_name';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const id_column = 'id'; // Default or adjust as needed
-      const precision = 9; // Default or adjust as needed
-      const filter = ''; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const id_column = 'id';
+      const precision = 9;
+      const filter = '';
       const bounds = '1,2'
       await postgis.geojson(table, { bounds, id_column, precision, geom_column, columns, filter });
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, bounds, id_column, precision, geom_column, columns, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, bounds, id_column, precision, geom_column, columns, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -578,63 +452,45 @@ describe('Postgis', () => {
       client.query.mockResolvedValue({ rows: [{ geojson: {} }] });
       const table = 'table_name';
       await postgis.geojson(table);
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query with filter and bounds length 3', async () => {
       client.query.mockResolvedValue({ rows: [{ geojson: {} }] });
       const table = 'table_name';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const id_column = 'id'; // Default or adjust as needed
-      const precision = 9; // Default or adjust as needed
-      const filter = 'column_name = "value"'; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const id_column = 'id';
+      const precision = 9;
+      const filter = 'column_name = "value"';
       const bounds = '1,2,3'
       await postgis.geojson(table, { bounds, id_column, precision, geom_column, columns, filter });
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, bounds, id_column, precision, geom_column, columns, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, bounds, id_column, precision, geom_column, columns, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query with bounds length 4', async () => {
       client.query.mockResolvedValue({ rows: [{ geojson: {} }] });
       const table = 'table_name';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const id_column = 'id'; // Default or adjust as needed
-      const precision = 9; // Default or adjust as needed
-      const filter = 'column_name = "value"'; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const id_column = 'id';
+      const precision = 9;
+      const filter = 'column_name = "value"';
       const bounds = '1,2,3,4'
       await postgis.geojson(table, { bounds, id_column, precision, geom_column, columns, filter });
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, bounds, id_column, precision, geom_column, columns, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, bounds, id_column, precision, geom_column, columns, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
 
   describe('geobuf', () => {
-    const queryFun = (table, bounds, geom_column = 'geom', columns, filter) => {
-      let bounds_value = bounds ? bounds.split(',').map(Number) : null;
+    const queryFun = (table: string, bounds?: string, geom_column = 'geom', columns?: string, filter?: string) => {
+      const bounds_value = bounds ? bounds.split(',').map(Number) : null;
       return `SELECT
       ST_AsGeobuf(q, 'geom')
   
@@ -687,19 +543,13 @@ describe('Postgis', () => {
     it('should execute the correct query with default parameters', async () => {
       client.query.mockResolvedValue({ rows: [{ st_asgeobuf: Buffer.from('') }] });
       const table = 'table_name';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const filter = ''; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const filter = '';
       const bounds = '1,2'
       await postgis.geobuf(table, { bounds, geom_column, columns, filter });
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, bounds, geom_column, columns, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, bounds, geom_column, columns, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -707,58 +557,40 @@ describe('Postgis', () => {
       client.query.mockResolvedValue({ rows: [{ st_asgeobuf: Buffer.from('') }] });
       const table = 'table_name';
       await postgis.geobuf(table);
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query with filter and bounds length 3', async () => {
       client.query.mockResolvedValue({ rows: [{ st_asgeobuf: Buffer.from('') }] });
       const table = 'table_name';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const filter = 'column_name = "value"'; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const filter = 'column_name = "value"';
       const bounds = '1,2,3'
       await postgis.geobuf(table, { bounds, geom_column, columns, filter });
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, bounds, geom_column, columns, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, bounds, geom_column, columns, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query with bounds length 4', async () => {
       client.query.mockResolvedValue({ rows: [{ st_asgeobuf: Buffer.from('') }] });
       const table = 'table_name';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const filter = 'column_name = "value"'; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const filter = 'column_name = "value"';
       const bounds = '1,2,3,4'
       await postgis.geobuf(table, { bounds, geom_column, columns, filter });
-
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, bounds, geom_column, columns, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, bounds, geom_column, columns, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
 
   describe('mvt', () => {
-    const queryFun = (table, x, y, z, columns, id_column, geom_column = 'geom', filter) => {
+    const queryFun = (table: string, x: number, y: number, z: number, columns?: string | null, id_column?: string | null, geom_column = 'geom', filter?: string) => {
       return `
  WITH mvtgeom as (
         SELECT
@@ -790,20 +622,15 @@ describe('Postgis', () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
       const x = 0, y = 0, z = 0;
-      const columns = '*'; // Default or adjust as needed
-      const id_column = 'id'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const filter = ''; // Default or adjust as needed
+      const columns = '*';
+      const id_column = 'id';
+      const geom_column = 'geom';
+      const filter = '';
 
       await postgis.mvt(table, x, y, z, { columns, id_column });
 
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, x, y, z, columns, id_column, geom_column, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, x, y, z, columns, id_column, geom_column, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -815,13 +642,8 @@ describe('Postgis', () => {
 
       await postgis.mvt(table, x, y, z);
 
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, x, y, z).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, x, y, z).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -830,28 +652,23 @@ describe('Postgis', () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
       const x = 0, y = 0, z = 0;
-      const columns = null; // Default or adjust as needed
-      const id_column = null; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const filter = 'column_name = "value"'; // Default or adjust as needed
+      const columns = null;
+      const id_column = null;
+      const geom_column = 'geom';
+      const filter = 'column_name = "value"';
 
       await postgis.mvt(table, x, y, z, { filter });
 
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, x, y, z, columns, id_column, geom_column, filter).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, x, y, z, columns, id_column, geom_column, filter).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
   });
 
 
   describe('nearest', () => {
-    const queryFun = (table, point, columns = '*', geom_column = 'geom', filter, limit = 10) => {
-      const [x, y, srid] = point.match(/^((-?\d+\.?\d+)(,-?\d+\.?\d+)(,[0-9]{4}))/)[0].split(',')
+    const queryFun = (table: string, point: string, columns = '*', geom_column = 'geom', filter?: string, limit = 10) => {
+      const [x, y, srid] = point.match(/^((-?\d+\.?\d+)(,-?\d+\.?\d+)(,[0-9]{4}))/)![0].split(',')
       return `
        SELECT
       ${columns},
@@ -881,20 +698,15 @@ describe('Postgis', () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
       const point = '73.70534,14.94202,4326';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const filter = ''; // Adjust as needed
-      const limit = 10; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const filter = '';
+      const limit = 10;
 
       await postgis.nearest(table, point, { columns, geom_column, filter, limit });
 
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, point, columns, geom_column, filter, limit).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, point, columns, geom_column, filter, limit).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -905,13 +717,8 @@ describe('Postgis', () => {
 
       await postgis.nearest(table, point);
 
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(table, point).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, point).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
@@ -919,27 +726,27 @@ describe('Postgis', () => {
       client.query.mockResolvedValue({ rows: [] });
       const table = 'table_name';
       const point = '73.70534,14.94202,4326';
-      const columns = '*'; // Default or adjust as needed
-      const geom_column = 'geom'; // Default or adjust as needed
-      const filter = 'column_name = "value"'; // Adjust as needed
-      const limit = 10; // Default or adjust as needed
+      const columns = '*';
+      const geom_column = 'geom';
+      const filter = 'column_name = "value"';
+      const limit = 10;
 
       await postgis.nearest(table, point, { columns, geom_column, filter, limit });
 
-      const expectedQuery = queryFun(table, point, columns, geom_column, filter, limit).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(table, point, columns, geom_column, filter, limit).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
+    });
+
+    it('should throw an error for invalid point format', async () => {
+      await expect(postgis.nearest('table', 'bad-point')).rejects.toThrow('Invalid point format');
     });
   });
 
 
   describe('transform_point', () => {
-    const queryFun = (point, srid) => {
-      const [x, y, srid1] = point.match(/^(-?\d+\.?\d+),(-?\d+\.?\d+),([0-9]{4})$/).slice(1);
+    const queryFun = (point: string, srid: string | number) => {
+      const [x, y, srid1] = point.match(/^(-?\d+\.?\d+),(-?\d+\.?\d+),([0-9]{4})$/)!.slice(1);
       return ` SELECT
     ST_X(
       ST_Transform(
@@ -963,36 +770,26 @@ describe('Postgis', () => {
     it('should execute the correct query with default parameters', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const point = '73.70534,14.94202,4326';
-      const srid = '3857'; // Set the SRID you want to transform to
-      await postgis.transform_point(point, { srid: srid });
-      // Define the expected SQL query with normalized whitespace
-      const expectedQuery = queryFun(point, srid).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const srid = '3857';
+      await postgis.transform_point(point, { srid: Number(srid) });
+      const expectedQuery = queryFun(point, srid).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should execute the query without parameters', async () => {
       client.query.mockResolvedValue({ rows: [] });
       const point = '73.70534,14.94202,4326';
-      const srid = '4326'; // Set the SRID you want to transform to
+      const srid = '4326';
       await postgis.transform_point(point);
 
-      const expectedQuery = queryFun(point, srid).replace(/\s+/g, ' ').trim(); // Normalize to single line
-
-      // Normalize the received query to single line for comparison
+      const expectedQuery = queryFun(point, srid).replace(/\s+/g, ' ').trim();
       const receivedQuery = client.query.mock.calls[0][0].replace(/\s+/g, ' ').trim();
-
-      // Expect the received query to match the expected pattern
       expect(receivedQuery).toMatch(expectedQuery);
     });
 
     it('should throw an error for invalid point format', async () => {
       const invalidPoint = 'invalid,point,format';
-
       await expect(postgis.transform_point(invalidPoint)).rejects.toThrow('Invalid point format');
     });
 
@@ -1008,16 +805,17 @@ describe('Postgis', () => {
         .toThrow(`Query execution failed: ${errorMessage}`);
     });
   });
+
   describe('_executeQuery', () => {
     it('should throw an error when query execution fails', async () => {
       const errorMessage = 'Query failed';
-      client.query.mockRejectedValueOnce(new Error(errorMessage)); // Use mockRejectedValueOnce to ensure it's used once
+      client.query.mockRejectedValueOnce(new Error(errorMessage));
 
+      // @ts-expect-error accessing private method for testing
       await expect(postgis._executeQuery('SELECT * FROM some_table'))
         .rejects
         .toThrow(`Query execution failed: ${errorMessage}`);
     });
   });
-
 
 });
