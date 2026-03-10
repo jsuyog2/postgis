@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
 
-> A **lightweight, type-safe** Node.js library for interacting with PostGIS-enabled PostgreSQL databases. Export GeoJSON, serve MVT vector tiles, run spatial queries, and more — with zero runtime dependencies.
+> A **lightweight, type-safe** Node.js library for interacting with PostGIS-enabled PostgreSQL databases. Export GeoJSON, serve MVT vector tiles, run spatial queries, and more — with zero runtime dependencies. Designed as a high-performance open source javascript library and nodejs utility for developers.
 
 📖 **[Full Documentation →](https://jsuyog2.github.io/postgis)**
 
@@ -315,6 +315,12 @@ See the [`examples/`](examples/) directory:
 | [`basic-usage.js`](examples/basic-usage.js) | List tables, columns, query, bbox |
 | [`geojson-export.js`](examples/geojson-export.js) | Export GeoJSON and Geobuf to files |
 | [`mvt-server.js`](examples/mvt-server.js) | Express MVT tile server with Mapbox GL JS viewer |
+
+## Troubleshooting
+
+Encountering issues like `permission denied`, missing `st_asmvt` function, or timeouts? 
+
+Check out our comprehensive [Troubleshooting Guide](https://jsuyog2.github.io/postgis/guide/troubleshooting) for quick solutions to the most common PostGIS and Node.js database hurdles.
 
 ---
 
