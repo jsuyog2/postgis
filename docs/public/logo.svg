@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00cfff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0055ff;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:0.9" />
+      <stop offset="100%" style="stop-color:#003fcc;stop-opacity:0.9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="95" fill="#0f1729"/>
+
+  <!-- Database cylinder (bottom portion of pin) -->
+  <ellipse cx="100" cy="85" rx="32" ry="10" fill="url(#dbGrad)" opacity="0.85"/>
+  <rect x="68" y="85" width="64" height="22" fill="url(#dbGrad)" opacity="0.85"/>
+  <ellipse cx="100" cy="107" rx="32" ry="10" fill="#0044dd" opacity="0.9"/>
+
+  <!-- DB lines (cylinder detail) -->
+  <ellipse cx="100" cy="91" rx="32" ry="6" fill="none" stroke="#00cfff" stroke-width="1.5" opacity="0.5"/>
+  <ellipse cx="100" cy="99" rx="32" ry="6" fill="none" stroke="#00cfff" stroke-width="1.5" opacity="0.5"/>
+
+  <!-- Map pin head (circle) -->
+  <circle cx="100" cy="66" r="28" fill="url(#pinGrad)"/>
+  <!-- Inner ring -->
+  <circle cx="100" cy="66" r="11" fill="#0f1729"/>
+  <circle cx="100" cy="66" r="6" fill="url(#pinGrad)"/>
+
+  <!-- Pin tail (triangle pointing down) -->
+  <polygon points="82,87 118,87 100,128" fill="url(#pinGrad)"/>
+
+  <!-- Pin drop shadow / tip -->
+  <ellipse cx="100" cy="129" rx="6" ry="3" fill="#00cfff" opacity="0.4"/>
+</svg>

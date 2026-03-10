@@ -8,7 +8,7 @@ export default defineConfig({
   base: '/postgis/',
 
   head: [
-    ['link', { rel: 'icon', href: '/postgis/favicon.ico' }],
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/postgis/favicon.svg' }],
     ['meta', { name: 'keywords', content: 'postgis, postgresql, geospatial, nodejs, gis, geojson, mvt, vector tiles' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'postgis — PostGIS for Node.js' }],
