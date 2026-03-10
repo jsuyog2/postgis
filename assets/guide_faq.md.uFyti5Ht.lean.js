@@ -1,1 +1,0 @@
-import{_ as s,o as e,c as a,ag as t}from"./chunks/framework.c5RtU-r0.js";const c=JSON.parse('{"title":"FAQ","description":"","frontmatter":{},"headers":[],"relativePath":"guide/faq.md","filePath":"guide/faq.md"}'),n={name:"guide/faq.md"};function o(r,i,l,h,p,d){return e(),a("div",null,[...i[0]||(i[0]=[t("",19)])])}const u=s(n,[["render",o]]);export{c as __pageData,u as default};
